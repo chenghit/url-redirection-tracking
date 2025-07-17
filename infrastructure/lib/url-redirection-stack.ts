@@ -6,9 +6,6 @@ import * as apigateway from 'aws-cdk-lib/aws-apigateway';
 import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import * as wafv2 from 'aws-cdk-lib/aws-wafv2';
-import * as certificatemanager from 'aws-cdk-lib/aws-certificatemanager';
-import * as route53 from 'aws-cdk-lib/aws-route53';
-import * as route53targets from 'aws-cdk-lib/aws-route53-targets';
 import * as sqs from 'aws-cdk-lib/aws-sqs';
 import * as logs from 'aws-cdk-lib/aws-logs';
 import * as cloudwatch from 'aws-cdk-lib/aws-cloudwatch';
@@ -238,75 +235,8 @@ export class UrlRedirectionStack extends cdk.Stack {
       apiKeyRequired: true
     });
 
-    // Custom domain setup
-    // Try to use existing wildcard certificate or create a new one
-    let certificate: certificatemanager.ICertificate;
-    
-    // Check if certificate ARN is provided via context or environment
-    const existingCertArn = this.node.tryGetContext('certificateArn');
-    
-    if (existingCertArn) {
-      // Use existing certificate
-      certificate = certificatemanager.Certificate.fromCertificateArn(
-        this,
-        'ExistingCertificate',
-        existingCertArn
-      );
-    } else {
-      // Create new certificate for the domain
-      certificate = new certificatemanager.Certificate(this, 'ApiCertificate', {
-        domainName: 'www.example.com',
-        validation: certificatemanager.CertificateValidation.fromDns(),
-        subjectAlternativeNames: ['*.chencch.people.aws.dev'] // Support wildcard
-      });
-    }
-
-    // Custom domain for API Gateway
-    const domainName = new apigateway.DomainName(this, 'ApiDomainName', {
-      domainName: 'www.example.com',
-      certificate: certificate,
-      endpointType: apigateway.EndpointType.REGIONAL,
-      securityPolicy: apigateway.SecurityPolicy.TLS_1_2
-    });
-
-    // Base path mapping
-    new apigateway.BasePathMapping(this, 'ApiBasePathMapping', {
-      domainName: domainName,
-      restApi: api,
-      stage: api.deploymentStage
-    });
-
-    // Route53 record for custom domain (optional - only if setupRoute53 context is true)
-    const setupRoute53 = this.node.tryGetContext('setupRoute53');
-    
-    if (setupRoute53 === 'true' && this.account && this.region) {
-      try {
-        const hostedZone = route53.HostedZone.fromLookup(this, 'HostedZone', {
-          domainName: 'chencch.people.aws.dev'
-        });
-
-        new route53.ARecord(this, 'ApiAliasRecord', {
-          zone: hostedZone,
-          recordName: 'edgeup',
-          target: route53.RecordTarget.fromAlias(
-            new route53targets.ApiGatewayDomain(domainName)
-          )
-        });
-      } catch (error) {
-        console.warn('Route53 setup failed:', error);
-      }
-    }
-
-    // Output the domain alias target for manual DNS setup
-    new cdk.CfnOutput(this, 'DomainTarget', {
-      value: domainName.domainNameAliasDomainName,
-      description: 'API Gateway domain name for DNS CNAME/A record setup'
-    });
-
-    new cdk.CfnOutput(this, 'DnsSetupInstructions', {
-      value: `Create a CNAME record: www.example.com -> ${domainName.domainNameAliasDomainName}`,
-      description: 'Manual DNS setup instructions'
-    });
+    // Custom domain setup has been removed to simplify deployment
+    // The API will be accessible via the default API Gateway URL
 
     // AWS WAF Web ACL for security and rate limiting
     const webAcl = new wafv2.CfnWebACL(this, 'ApiWebAcl', {
@@ -375,8 +305,11 @@ export class UrlRedirectionStack extends cdk.Stack {
     });
 
     // Associate WAF with API Gateway
+    // We need to use the correct ARN format for the API Gateway stage
+    const apiGatewayStageArn = `arn:aws:apigateway:${this.region}::/restapis/${api.restApiId}/stages/${api.deploymentStage.stageName}`;
+    
     new wafv2.CfnWebACLAssociation(this, 'WebAclAssociation', {
-      resourceArn: api.arnForExecuteApi(),
+      resourceArn: apiGatewayStageArn,
       webAclArn: webAcl.attrArn
     });
 
@@ -650,10 +583,7 @@ export class UrlRedirectionStack extends cdk.Stack {
       description: 'API Gateway URL'
     });
 
-    new cdk.CfnOutput(this, 'CustomDomainUrl', {
-      value: `https://www.example.com`,
-      description: 'Custom domain URL'
-    });
+    // Custom domain output removed as we're using the default API Gateway URL
 
     new cdk.CfnOutput(this, 'ApiKeyId', {
       value: apiKey.keyId,

@@ -78,6 +78,26 @@ The load tests collect and report the following metrics:
 - **Response time distribution**: breakdown of response times in buckets (0-50ms, 51-100ms, etc.)
 - **Scenario breakdown**: distribution of requests across different test scenarios
 
+### CloudWatch Metrics
+
+In addition to the load test metrics, the service now publishes the following custom metrics to CloudWatch:
+
+#### Redirection Lambda Metrics
+- **redirection_count**: Number of redirections performed (dimensions: has_source_attribution, destination_domain, status_code)
+- **redirection_duration**: Response time for redirection requests in milliseconds (dimensions: status_code)
+- **redirection_memory_usage**: Memory usage of the Lambda function in MB
+- **redirection_error_count**: Number of errors encountered (dimensions: error_type, error_code, status_code)
+
+#### Analytics Lambda Metrics
+- **analytics_query_count**: Number of query requests (dimensions: has_source_filter, has_date_filter, status_code)
+- **analytics_query_result_count**: Number of results returned from queries (dimensions: has_source_filter, has_date_filter)
+- **analytics_query_duration**: Response time for query requests in milliseconds (dimensions: has_source_filter, has_date_filter, status_code)
+- **analytics_aggregation_count**: Number of aggregation requests (dimensions: has_source_filter, has_date_filter, status_code)
+- **analytics_aggregation_result_count**: Number of aggregations returned
+- **analytics_aggregation_duration**: Response time for aggregation requests in milliseconds (dimensions: status_code)
+- **analytics_memory_usage**: Memory usage of the Lambda function in MB
+- **analytics_error_count**: Number of errors encountered (dimensions: error_type, error_code, status_code)
+
 ## Interpreting Results
 
 After running a load test, a performance report will be displayed in the console. For more detailed analysis, use the HTML report generated with the `load-test:report` command.
