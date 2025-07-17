@@ -83,6 +83,15 @@ export class UrlRedirectionStack extends cdk.Stack {
         iam.ManagedPolicy.fromAwsManagedPolicyName('service-role/AWSLambdaBasicExecutionRole')
       ]
     });
+    
+    // Add CloudWatch metrics permissions to Lambda role
+    lambdaRole.addToPolicy(new iam.PolicyStatement({
+      actions: [
+        'cloudwatch:PutMetricData'
+      ],
+      resources: ['*'],
+      effect: iam.Effect.ALLOW
+    }));
 
     // Grant DynamoDB permissions to Lambda role
     trackingTable.grantReadWriteData(lambdaRole);
@@ -101,7 +110,8 @@ export class UrlRedirectionStack extends cdk.Stack {
       environment: {
         DYNAMODB_TABLE_NAME: trackingTable.tableName,
         TRACKING_DLQ_URL: trackingDLQ.queueUrl,
-        AWS_NODEJS_CONNECTION_REUSE_ENABLED: '1'
+        AWS_NODEJS_CONNECTION_REUSE_ENABLED: '1',
+        AWS_REGION: this.region
       },
       description: 'Handles URL redirection and tracking'
     });
@@ -116,7 +126,8 @@ export class UrlRedirectionStack extends cdk.Stack {
       timeout: cdk.Duration.seconds(30),
       environment: {
         DYNAMODB_TABLE_NAME: trackingTable.tableName,
-        AWS_NODEJS_CONNECTION_REUSE_ENABLED: '1'
+        AWS_NODEJS_CONNECTION_REUSE_ENABLED: '1',
+        AWS_REGION: this.region
       },
       description: 'Handles analytics queries and aggregations'
     });
@@ -132,7 +143,8 @@ export class UrlRedirectionStack extends cdk.Stack {
       environment: {
         DYNAMODB_TABLE_NAME: trackingTable.tableName,
         TRACKING_DLQ_URL: trackingDLQ.queueUrl,
-        AWS_NODEJS_CONNECTION_REUSE_ENABLED: '1'
+        AWS_NODEJS_CONNECTION_REUSE_ENABLED: '1',
+        AWS_REGION: this.region
       },
       description: 'Processes failed tracking events from dead letter queue'
     });
@@ -298,6 +310,7 @@ export class UrlRedirectionStack extends cdk.Stack {
 
     // AWS WAF Web ACL for security and rate limiting
     const webAcl = new wafv2.CfnWebACL(this, 'ApiWebAcl', {
+      name: 'UrlRedirectionWebAcl', // Explicit name to avoid conflicts
       scope: 'REGIONAL',
       defaultAction: { allow: {} },
       rules: [
@@ -306,7 +319,7 @@ export class UrlRedirectionStack extends cdk.Stack {
           priority: 1,
           statement: {
             rateBasedStatement: {
-              limit: 10, // 10 requests per 5-minute window
+              limit: 100, // 100 requests per 5-minute window
               aggregateKeyType: 'IP'
             }
           },
@@ -324,7 +337,11 @@ export class UrlRedirectionStack extends cdk.Stack {
           statement: {
             managedRuleGroupStatement: {
               vendorName: 'AWS',
-              name: 'AWSManagedRulesCommonRuleSet'
+              name: 'AWSManagedRulesCommonRuleSet',
+              excludedRules: [
+                { name: 'SizeRestrictions_BODY' },
+                { name: 'NoUserAgent_HEADER' }
+              ]
             }
           },
           visibilityConfig: {
@@ -347,38 +364,6 @@ export class UrlRedirectionStack extends cdk.Stack {
             sampledRequestsEnabled: true,
             cloudWatchMetricsEnabled: true,
             metricName: 'KnownBadInputsRuleSetMetric'
-          }
-        },
-        {
-          name: 'AWSManagedRulesSQLiRuleSet',
-          priority: 4,
-          overrideAction: { none: {} },
-          statement: {
-            managedRuleGroupStatement: {
-              vendorName: 'AWS',
-              name: 'AWSManagedRulesSQLiRuleSet'
-            }
-          },
-          visibilityConfig: {
-            sampledRequestsEnabled: true,
-            cloudWatchMetricsEnabled: true,
-            metricName: 'SQLiRuleSetMetric'
-          }
-        },
-        {
-          name: 'AWSManagedRulesXSSRuleSet',
-          priority: 5,
-          overrideAction: { none: {} },
-          statement: {
-            managedRuleGroupStatement: {
-              vendorName: 'AWS',
-              name: 'AWSManagedRulesXSSRuleSet'
-            }
-          },
-          visibilityConfig: {
-            sampledRequestsEnabled: true,
-            cloudWatchMetricsEnabled: true,
-            metricName: 'XSSRuleSetMetric'
           }
         }
       ],

@@ -1,5 +1,4 @@
 // Monitoring and observability implementation for redirection Lambda
-import { CloudWatchClient, PutMetricDataCommand } from '@aws-sdk/client-cloudwatch';
 import { Logger } from '../../shared/logger';
 import { MetricBatcher, MetricUnits, MetricNamespaces } from '../../shared/metrics';
 import { MONITORING } from '../../shared/constants';
