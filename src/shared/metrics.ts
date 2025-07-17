@@ -1,5 +1,5 @@
 // CloudWatch metrics utility for custom metrics and monitoring
-import { CloudWatchClient, PutMetricDataCommand } from '@aws-sdk/client-cloudwatch';
+import { CloudWatchClient, PutMetricDataCommand, StandardUnit } from '@aws-sdk/client-cloudwatch';
 import { Logger } from './logger';
 import { AWS_REGION } from './constants';
 
@@ -11,7 +11,7 @@ export interface MetricDimension {
 export interface MetricData {
   MetricName: string;
   Value: number;
-  Unit: string;
+  Unit: StandardUnit | string;
   Dimensions?: MetricDimension[];
   Timestamp?: Date;
 }
@@ -32,7 +32,10 @@ export async function publishMetrics(
     const command = new PutMetricDataCommand({
       Namespace: namespace,
       MetricData: metrics.map(metric => ({
-        ...metric,
+        MetricName: metric.MetricName,
+        Value: metric.Value,
+        Unit: metric.Unit as StandardUnit,
+        Dimensions: metric.Dimensions,
         Timestamp: metric.Timestamp || new Date()
       }))
     });
@@ -58,13 +61,13 @@ export async function publishMetrics(
 export function createMetric(
   name: string,
   value: number,
-  unit: string,
+  unit: StandardUnit | string,
   dimensions?: Record<string, string>
 ): MetricData {
   return {
     MetricName: name,
     Value: value,
-    Unit: unit,
+    Unit: unit as StandardUnit,
     Dimensions: dimensions ? 
       Object.entries(dimensions).map(([Name, Value]) => ({ Name, Value })) : 
       undefined
@@ -116,7 +119,7 @@ export const MetricUnits = {
   GIGABITS_PER_SECOND: 'Gigabits/Second',
   TERABITS_PER_SECOND: 'Terabits/Second',
   COUNT_PER_SECOND: 'Count/Second'
-} as const;
+};
 
 /**
  * Common metric namespaces
@@ -153,7 +156,7 @@ export class MetricBatcher {
   /**
    * Adds a metric to the batch
    */
-  addMetric(name: string, value: number, unit: string, dimensions?: Record<string, string>): void {
+  addMetric(name: string, value: number, unit: StandardUnit | string, dimensions?: Record<string, string>): void {
     this.metrics.push(createMetric(name, value, unit, dimensions));
   }
 
