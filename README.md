@@ -32,7 +32,7 @@ The application is deployed using AWS CDK to the Tokyo (ap-northeast-1) region.
 
 ### Prerequisites
 
-- Node.js 18.x or higher
+- Node.js 22.x or higher
 - AWS CLI configured with appropriate credentials
 - AWS CDK installed globally
 
