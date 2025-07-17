@@ -111,7 +111,7 @@ export class UrlRedirectionStack extends cdk.Stack {
         DYNAMODB_TABLE_NAME: trackingTable.tableName,
         TRACKING_DLQ_URL: trackingDLQ.queueUrl,
         AWS_NODEJS_CONNECTION_REUSE_ENABLED: '1',
-        AWS_REGION: this.region
+        METRICS_REGION: this.region
       },
       description: 'Handles URL redirection and tracking'
     });
@@ -127,7 +127,7 @@ export class UrlRedirectionStack extends cdk.Stack {
       environment: {
         DYNAMODB_TABLE_NAME: trackingTable.tableName,
         AWS_NODEJS_CONNECTION_REUSE_ENABLED: '1',
-        AWS_REGION: this.region
+        METRICS_REGION: this.region
       },
       description: 'Handles analytics queries and aggregations'
     });
@@ -144,7 +144,7 @@ export class UrlRedirectionStack extends cdk.Stack {
         DYNAMODB_TABLE_NAME: trackingTable.tableName,
         TRACKING_DLQ_URL: trackingDLQ.queueUrl,
         AWS_NODEJS_CONNECTION_REUSE_ENABLED: '1',
-        AWS_REGION: this.region
+        METRICS_REGION: this.region
       },
       description: 'Processes failed tracking events from dead letter queue'
     });

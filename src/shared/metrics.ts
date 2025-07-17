@@ -26,7 +26,7 @@ export async function publishMetrics(
 ): Promise<void> {
   try {
     const client = new CloudWatchClient({ 
-      region: process.env.AWS_REGION || AWS_REGION 
+      region: process.env.METRICS_REGION || process.env.AWS_REGION || AWS_REGION 
     });
 
     const command = new PutMetricDataCommand({
