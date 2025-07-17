@@ -583,8 +583,19 @@ export class UrlRedirectionStack extends cdk.Stack {
     redirectionDurationAlarm.addAlarmAction(new cloudwatchActions.SnsAction(alarmTopic));
 
     // 3. API Gateway 4xx Error Rate Alarm
+    const api4xxErrorMetric = new cloudwatch.Metric({
+      namespace: 'AWS/ApiGateway',
+      metricName: '4XXError',
+      dimensionsMap: {
+        ApiName: api.restApiName,
+        Stage: api.deploymentStage.stageName
+      },
+      statistic: 'Sum',
+      period: cdk.Duration.minutes(5)
+    });
+    
     const api4xxErrorAlarm = new cloudwatch.Alarm(this, 'Api4xxErrorAlarm', {
-      metric: api.metric4XXError({ statistic: 'Sum', period: cdk.Duration.minutes(5) }),
+      metric: api4xxErrorMetric,
       threshold: 10,
       evaluationPeriods: 1,
       alarmDescription: 'Alarm when API Gateway has more than 10 4xx errors in 5 minutes',
@@ -594,8 +605,19 @@ export class UrlRedirectionStack extends cdk.Stack {
     api4xxErrorAlarm.addAlarmAction(new cloudwatchActions.SnsAction(alarmTopic));
 
     // 4. API Gateway 5xx Error Rate Alarm
+    const api5xxErrorMetric = new cloudwatch.Metric({
+      namespace: 'AWS/ApiGateway',
+      metricName: '5XXError',
+      dimensionsMap: {
+        ApiName: api.restApiName,
+        Stage: api.deploymentStage.stageName
+      },
+      statistic: 'Sum',
+      period: cdk.Duration.minutes(1)
+    });
+    
     const api5xxErrorAlarm = new cloudwatch.Alarm(this, 'Api5xxErrorAlarm', {
-      metric: api.metric5XXError({ statistic: 'Sum', period: cdk.Duration.minutes(1) }),
+      metric: api5xxErrorMetric,
       threshold: 1,
       evaluationPeriods: 1,
       alarmDescription: 'Alarm when API Gateway has any 5xx errors in 1 minute',
