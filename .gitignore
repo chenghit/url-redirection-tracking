@@ -47,3 +47,13 @@ build/
 
 # Local development
 .local/
+
+# Git backup
+.git.bak/
+
+# Script files
+replace-domain.sh
+replacements.txt
+
+# Kiro files
+.kiro/
