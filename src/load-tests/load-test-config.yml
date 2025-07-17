@@ -1,0 +1,130 @@
+config:
+  target: "{{$processEnvironment.API_URL}}"
+  phases:
+    # Warm-up phase - gradually increase to target RPS
+    - duration: 60
+      arrivalRate: 1
+      rampTo: 10
+      name: "Warm up phase - gradually increase to 10 RPS"
+    
+    # Sustained load phase - maintain target RPS
+    - duration: 180
+      arrivalRate: 10
+      name: "Sustained load - maintain 10 RPS for 3 minutes"
+    
+    # Cool-down phase - gradually decrease load
+    - duration: 30
+      arrivalRate: 10
+      rampTo: 1
+      name: "Cool down phase - gradually decrease from 10 RPS"
+  
+  environments:
+    # Production environment configuration
+    production:
+      target: "https://www.example.com"
+      # If using API Gateway directly, use this format:
+      # target: "https://<api-id>.execute-api.<region>.amazonaws.com/prod"
+    
+    # Development environment configuration
+    development:
+      target: "http://localhost:3000"
+  
+  plugins:
+    expect: {}
+    metrics-by-endpoint: {}
+    # Enable HTML report generation
+    html-report: {}
+    # Enable detailed metrics collection
+    metrics-by-scenario: {}
+  
+  processor: "./load-test-processor.js"
+  
+  defaults:
+    headers:
+      User-Agent: "Artillery Load Test"
+      Accept: "*/*"
+  
+  # Performance requirements validation
+  ensure:
+    maxErrorRate: 5
+    max: 300  # Maximum response time in ms
+    statusCode: 200-399
+    p95: 250  # 95th percentile response time
+    p99: 280  # 99th percentile response time
+  
+  # Output detailed metrics to console
+  verbose: true
+  
+  # Before and after hooks for test execution
+  before:
+    flow:
+      - log: "Starting load test with target RPS: 10"
+      - log: "Testing performance against requirements: Response time < 300ms at 10 RPS"
+  
+  after:
+    flow:
+      - function: "reportPerformanceMetrics"
+      - log: "Load test completed. For detailed analysis, run: node src/load-tests/analyze-results.js report.json"
+
+scenarios:
+  # Main redirection flow scenario (80% of traffic)
+  - name: "URL Redirection Flow"
+    weight: 80
+    flow:
+      - function: "generateValidUrl"
+      - get:
+          url: "/url?url={{url}}&sa={{sourceAttribution}}"
+          followRedirect: false
+          capture:
+            - header: "Location"
+              as: "redirectUrl"
+            - header: "X-Response-Time"
+              as: "responseTime"
+            - header: "X-Correlation-ID"
+              as: "correlationId"
+          expect:
+            - statusCode: 302
+            - contentType: null
+            - hasHeader: "Location"
+            - hasHeader: "X-Response-Time"
+            - hasHeader: "X-Correlation-ID"
+      - log: "Redirected to: {{ redirectUrl }} - Response time: {{ responseTime }} - Correlation ID: {{ correlationId }}"
+      - function: "validateResponseTime"
+
+  # Error handling scenarios (20% of traffic combined)
+  - name: "Error Handling - Invalid URL"
+    weight: 7
+    flow:
+      - get:
+          url: "/url?url=invalid-url&sa=EdgeUp001"
+          followRedirect: false
+          expect:
+            - statusCode: 400
+            - contentType: "application/json"
+            - hasHeader: "X-Correlation-ID"
+      - function: "recordFailure"
+
+  - name: "Error Handling - Invalid Domain"
+    weight: 7
+    flow:
+      - get:
+          url: "/url?url=https://example.com&sa=EdgeUp001"
+          followRedirect: false
+          expect:
+            - statusCode: 400
+            - contentType: "application/json"
+            - hasHeader: "X-Correlation-ID"
+      - function: "recordFailure"
+
+  - name: "Error Handling - Invalid Source Attribution"
+    weight: 6
+    flow:
+      - function: "generateValidUrl"
+      - get:
+          url: "/url?url={{url}}&sa=Invalid"
+          followRedirect: false
+          expect:
+            - statusCode: 400
+            - contentType: "application/json"
+            - hasHeader: "X-Correlation-ID"
+      - function: "recordFailure"
