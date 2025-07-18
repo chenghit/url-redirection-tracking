@@ -30,6 +30,13 @@ export const handler = async (
   const startTime = Date.now();
   const logger = createLoggerFromEvent(event, context);
   
+  // Extract client IP from X-Forwarded-For header
+  const headers = event.headers || {};
+  const xForwardedFor = headers['X-Forwarded-For'] || headers['x-forwarded-for'];
+  const clientIp = xForwardedFor ? xForwardedFor.split(',')[0].trim() : '0.0.0.0';
+  
+  logger.info('Client IP extracted:', clientIp);
+  
   // Initialize metrics batcher for CloudWatch metrics
   const metricBatcher = new MetricBatcher(
     MONITORING.NAMESPACES.URL_REDIRECTION_LAMBDA,
