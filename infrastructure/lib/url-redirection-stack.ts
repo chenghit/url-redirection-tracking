@@ -155,10 +155,11 @@ export class UrlRedirectionStack extends cdk.Stack {
       })
     );
 
-    // API Gateway REST API
+    // API Gateway REST API (Regional)
     const api = new apigateway.RestApi(this, 'UrlRedirectionApi', {
       restApiName: 'URL Redirection and Tracking API',
       description: 'Serverless URL redirection with tracking capabilities',
+      endpointTypes: [apigateway.EndpointType.REGIONAL], // Changed from default EDGE to REGIONAL
       defaultCorsPreflightOptions: {
         allowOrigins: apigateway.Cors.ALL_ORIGINS,
         allowMethods: apigateway.Cors.ALL_METHODS,

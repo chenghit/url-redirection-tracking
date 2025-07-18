@@ -8,6 +8,7 @@ yarn-error.log
 dist/
 clean/
 deploy/
+deploy-fix/
 *.tsbuildinfo
 
 # CDK output
