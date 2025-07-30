@@ -1,0 +1,21 @@
+{
+  "region": "ap-northeast-1",
+  "stackName": "UrlRedirectionTrackingStack",
+  "lambdaRuntime": "nodejs22.x",
+  "allowedDomains": [
+    "amazonaws.cn",
+    "amazonaws.com", 
+    "amazon.com"
+  ],
+  "sourceAttributionPattern": "^EdgeUp\\d{3}$",
+  "monitoring": {
+    "enableDetailedMetrics": true,
+    "logRetentionDays": 30,
+    "alarmNotificationEnabled": true
+  },
+  "waf": {
+    "enableSqlInjectionProtection": true,
+    "enableXssProtection": true,
+    "enableKnownBadInputsProtection": true
+  }
+}

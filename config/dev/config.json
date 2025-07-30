@@ -1,0 +1,36 @@
+{
+  "environment": "dev",
+  "profile": "primary",
+  "lambda": {
+    "redirectionMemory": 128,
+    "trackingMemory": 256,
+    "analyticsMemory": 256,
+    "timeout": 30,
+    "reservedConcurrency": 5
+  },
+  "dynamodb": {
+    "billingMode": "PAY_PER_REQUEST",
+    "pointInTimeRecovery": false,
+    "removalPolicy": "DESTROY"
+  },
+  "sqs": {
+    "visibilityTimeout": 30,
+    "messageRetentionPeriod": 1209600,
+    "maxReceiveCount": 3,
+    "batchSize": 10
+  },
+  "waf": {
+    "rateLimit": 100,
+    "rateLimitWindow": 300
+  },
+  "apiGateway": {
+    "throttlingRateLimit": 100,
+    "throttlingBurstLimit": 200,
+    "endpointType": "REGIONAL"
+  },
+  "monitoring": {
+    "errorThreshold": 10,
+    "latencyThreshold": 2000,
+    "dlqAlarmThreshold": 1
+  }
+}

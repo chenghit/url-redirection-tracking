@@ -1,0 +1,40 @@
+{
+  "environment": "prod",
+  "profile": "production",
+  "lambda": {
+    "redirectionMemory": 512,
+    "trackingMemory": 1024,
+    "analyticsMemory": 1024,
+    "timeout": 30,
+    "reservedConcurrency": 20
+  },
+  "dynamodb": {
+    "billingMode": "PAY_PER_REQUEST",
+    "pointInTimeRecovery": true,
+    "removalPolicy": "RETAIN",
+    "backupEnabled": true
+  },
+  "sqs": {
+    "fifo": true,
+    "contentBasedDeduplication": true,
+    "visibilityTimeout": 30,
+    "messageRetentionPeriod": 1209600,
+    "maxReceiveCount": 3,
+    "batchSize": 10
+  },
+  "waf": {
+    "rateLimit": 10,
+    "rateLimitWindow": 300
+  },
+  "apiGateway": {
+    "throttlingRateLimit": 1000,
+    "throttlingBurstLimit": 2000,
+    "endpointType": "REGIONAL"
+  },
+  "monitoring": {
+    "errorThreshold": 3,
+    "latencyThreshold": 1000,
+    "dlqAlarmThreshold": 1,
+    "enableDetailedMonitoring": true
+  }
+}

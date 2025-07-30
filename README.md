@@ -1,346 +1,469 @@
-# URL Redirection and Tracking Service
+# URL Redirection Tracking System
 
-A serverless application for URL redirection with tracking capabilities, built on AWS Lambda, API Gateway, and DynamoDB.
+A serverless URL redirection and tracking application built on AWS using CDK, designed to handle URL redirections while capturing detailed analytics data for business intelligence purposes.
 
 ## Overview
 
-This service provides a simple yet powerful URL redirection mechanism with asynchronous tracking capabilities. It allows redirecting users to specified URLs while collecting tracking data for analytics purposes. The system is designed to be highly scalable, secure, and low-latency.
+This system provides secure URL redirection services with comprehensive tracking capabilities. It's built using AWS serverless technologies and follows best practices for scalability, security, and observability.
 
-## Features
+### Key Features
 
-- **Fast URL Redirection**: Redirects users to specified URLs with minimal latency
-- **Asynchronous Tracking**: Records tracking data without impacting redirection performance
-- **Domain Validation**: Ensures redirects only go to allowed domains (amazonaws.cn, amazonaws.com, amazon.com)
-- **Analytics API**: Query and aggregate tracking data with flexible filtering options
-- **Security**: Implements AWS WAF for rate limiting and protection against common attacks
-- **Monitoring**: Comprehensive CloudWatch metrics, logs, and alarms
-- **Serverless Architecture**: Built entirely on AWS serverless services for minimal operational overhead
+- **Secure URL Redirection**: Only allows redirections to authorized domains (amazonaws.cn, amazonaws.com, amazon.com)
+- **Real-time Tracking**: Captures detailed analytics data including IP addresses, timestamps, and source attribution
+- **Scalable Architecture**: Serverless design that automatically scales based on demand
+- **Comprehensive Monitoring**: Built-in CloudWatch alarms and health checks
+- **Security**: WAF protection with rate limiting and common attack prevention
+- **Analytics API**: RESTful API for querying and aggregating tracking data
 
 ## Architecture
 
-The application follows a serverless microservices architecture with the following key components:
+The system consists of three main Lambda functions:
 
-- **API Gateway**: Entry point for all redirection and analytics requests
-- **Lambda Functions**: Core business logic for URL validation, redirection, and analytics
-- **DynamoDB**: Persistent storage for tracking data
-- **AWS WAF**: Security and rate limiting
+1. **Redirection Lambda**: Handles incoming URL redirection requests
+2. **Tracking Lambda**: Processes tracking data asynchronously via SQS
+3. **Analytics Lambda**: Provides API endpoints for querying tracking data
+
+### Infrastructure Components
+
+- **API Gateway**: Regional endpoint for handling HTTP requests
+- **AWS Lambda**: Serverless compute for business logic
+- **DynamoDB**: NoSQL database for storing tracking events
+- **SQS**: Message queue for asynchronous tracking processing
 - **CloudWatch**: Monitoring, logging, and alerting
+- **AWS WAF**: Web application firewall for security
 
-## Deployment
-
-The application is deployed using AWS CDK to the Tokyo (ap-northeast-1) region.
+## Getting Started
 
 ### Prerequisites
 
-- Node.js 22.x or higher
+- Node.js 18+ and npm
 - AWS CLI configured with appropriate credentials
-- AWS CDK installed globally
+- AWS CDK CLI (`npm install -g aws-cdk@latest`) - **Note**: Ensure you have CDK CLI version 2.1020.2 or later for compatibility
+- TypeScript (`npm install -g typescript`)
 
 ### Installation
 
-1. Clone the repository
-2. Install dependencies:
+1. Clone the repository:
+```bash
+git clone <repository-url>
+cd url-redirection-tracking
+```
 
+2. Install dependencies:
 ```bash
 npm install
 ```
 
-3. Bootstrap CDK (if not already done):
+3. Build the project:
+```bash
+npm run build
+```
+
+4. Run tests:
+```bash
+npm test
+```
+
+### Deployment
+
+#### Quick Deployment
+
+Deploy to development environment:
+```bash
+./scripts/deploy.sh
+```
+
+#### Custom Deployment
+
+Deploy with specific options:
+```bash
+# Deploy to production environment
+./scripts/deploy.sh -e prod -p production
+
+# Deploy with custom region
+./scripts/deploy.sh -r us-west-2
+
+# Dry run (synthesize only)
+./scripts/deploy.sh --dry-run
+
+# Skip tests during deployment
+./scripts/deploy.sh --skip-tests
+```
+
+#### Manual CDK Deployment
 
 ```bash
-npm run cdk:bootstrap
+# Bootstrap CDK (first time only)
+cdk bootstrap
+
+# Deploy the stack
+cdk deploy
 ```
 
-4. Deploy the application:
+## API Reference
+
+### Redirection Endpoint
+
+**GET** `/{proxy+}`
+
+Redirects users to the specified destination URL while capturing tracking data.
+
+**Query Parameters:**
+- `url` (required): Destination URL (must be from allowed domains)
+- `sa` (optional): Source attribution in format `EdgeUp###` (e.g., `EdgeUp001`)
+
+**Example:**
+```bash
+curl "https://api-gateway-url.amazonaws.com/prod/redirect?url=https://aws.amazon.com&sa=EdgeUp001"
+```
+
+**Response:**
+- `302 Found` with `Location` header pointing to destination URL
+- `400 Bad Request` for invalid parameters
+- `500 Internal Server Error` for system errors
+
+### Analytics Endpoints
+
+All analytics endpoints require authentication via `X-API-Key` header. The API key is automatically generated during deployment and can be retrieved using the provided script.
+
+#### Query Tracking Events
+
+**GET** `/analytics/query`
+
+Retrieve tracking events with filtering and pagination.
+
+**Query Parameters:**
+- `start_date` (optional): Filter start date (ISO 8601 format)
+- `end_date` (optional): Filter end date (ISO 8601 format)
+- `source_attribution` (optional): Filter by source attribution
+- `destination_url` (optional): Filter by destination URL
+- `limit` (optional): Number of results (default: 100, max: 1000)
+- `sort_order` (optional): Sort order `asc` or `desc` (default: `desc`)
+- `offset` (optional): Pagination offset (default: 0)
+
+**Example:**
+```bash
+curl -H "X-API-Key: your-api-key" \
+  "https://api-gateway-url.amazonaws.com/prod/analytics/query?start_date=2024-01-01T00:00:00Z&limit=50"
+```
+
+#### Aggregate Statistics
+
+**GET** `/analytics/aggregate`
+
+Get aggregated statistics grouped by source attribution.
+
+**Query Parameters:**
+- `start_date` (optional): Filter start date (ISO 8601 format)
+- `end_date` (optional): Filter end date (ISO 8601 format)
+- `source_attribution` (optional): Filter by specific source attribution
+
+**Example:**
+```bash
+curl -H "X-API-Key: your-api-key" \
+  "https://api-gateway-url.amazonaws.com/prod/analytics/aggregate"
+```
+
+#### Health Checks
+
+**GET** `/health`
+Basic health check endpoint (API key required).
+
+**GET** `/health/deep`
+Comprehensive health check including database connectivity (API key required).
+
+### API Key Management
+
+After deployment, retrieve your API key using:
 
 ```bash
-npm run deploy
+# Get API key value
+./scripts/get-api-key.sh
+
+# Get API key for specific stack
+./scripts/get-api-key.sh MyCustomStackName
 ```
 
-## Usage
+The API key is required for all `/analytics/*` and `/health*` endpoints but not for redirection endpoints.
 
-### URL Redirection
+## Configuration
 
-To redirect a user, make a GET request to the service endpoint with the following query parameters:
+### Environment-Specific Configuration
 
-- `url` (required): The destination URL to redirect to (must be on allowed domains)
-- `sa` (optional): Source attribution parameter (must follow EdgeUp + 3 digits format)
+Configuration files are located in the `config/` directory:
 
-#### Example Redirection Request
+- `config/common/common.json`: Shared configuration
+- `config/dev/config.json`: Development environment
+- `config/prod/config.json`: Production environment
+- `config/staging/config.json`: Staging environment
 
-```
-GET https://www.example.com/url?sa=EdgeUp001&url=https://aws.amazon.com/cn/blogs/china/new-aws-waf-antiddos-managed-rules/
-```
-
-This will redirect the user to the specified URL and asynchronously record tracking data.
-
-## Analytics API
-
-The Analytics API allows querying and aggregating tracking data. All analytics endpoints require an API key for authentication.
-
-### Getting an API Key
-
-API keys are managed through the AWS Management Console:
-
-1. Navigate to API Gateway in the AWS Console
-2. Select the URL Redirection and Tracking API
-3. Go to "API Keys" in the left navigation
-4. Find the "analytics-api-key" and note its value
-
-### API Endpoints
-
-The Analytics API provides two main endpoints:
-
-1. **Query Endpoint**: Retrieve tracking events with filtering and pagination
-2. **Aggregate Endpoint**: Get aggregated statistics on tracking data
-
-### Query Endpoint
-
-The query endpoint allows retrieving tracking events with various filtering options.
-
-#### Endpoint
-
-```
-GET https://www.example.com/analytics/query
-```
-
-#### Query Parameters
-
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| start_date | ISO 8601 date string | No | Filter events after this date |
-| end_date | ISO 8601 date string | No | Filter events before this date |
-| source_attribution | String | No | Filter by source attribution (must follow EdgeUp + 3 digits format) |
-| destination_url | String | No | Filter by destination URL (partial match) |
-| limit | Number | No | Maximum number of results to return (default: 100, max: 1000) |
-| sort_order | String | No | Sort order by timestamp ('asc' or 'desc', default: 'desc') |
-| offset | Number | No | Pagination offset (default: 0) |
-
-#### Example Query Requests
-
-**1. Basic Query (Most Recent Events)**
-
-```bash
-curl -X GET "https://www.example.com/analytics/query" \
-  -H "x-api-key: YOUR_API_KEY"
-```
-
-**2. Query by Date Range**
-
-```bash
-curl -X GET "https://www.example.com/analytics/query?start_date=2024-01-01T00:00:00.000Z&end_date=2024-01-31T23:59:59.999Z" \
-  -H "x-api-key: YOUR_API_KEY"
-```
-
-**3. Query by Source Attribution**
-
-```bash
-curl -X GET "https://www.example.com/analytics/query?source_attribution=EdgeUp001" \
-  -H "x-api-key: YOUR_API_KEY"
-```
-
-**4. Complex Query with Multiple Filters**
-
-```bash
-curl -X GET "https://www.example.com/analytics/query?source_attribution=EdgeUp001&start_date=2024-01-01T00:00:00.000Z&end_date=2024-01-31T23:59:59.999Z&limit=50&sort_order=asc" \
-  -H "x-api-key: YOUR_API_KEY"
-```
-
-**5. Pagination Example**
-
-```bash
-# First page (first 100 results)
-curl -X GET "https://www.example.com/analytics/query?limit=100&offset=0" \
-  -H "x-api-key: YOUR_API_KEY"
-
-# Second page (next 100 results)
-curl -X GET "https://www.example.com/analytics/query?limit=100&offset=100" \
-  -H "x-api-key: YOUR_API_KEY"
-```
-
-#### Example Query Response
+### Key Configuration Options
 
 ```json
 {
-  "data": {
-    "events": [
-      {
-        "tracking_id": "550e8400-e29b-41d4-a716-446655440000",
-        "timestamp": "2024-01-15T10:30:45.123Z",
-        "formatted_timestamp": "2024-01-15 10:30:45",
-        "source_attribution": "EdgeUp001",
-        "client_ip": "192.168.1.1",
-        "destination_url": "https://aws.amazon.com/cn/blogs/china/new-aws-waf-antiddos-managed-rules/"
-      },
-      {
-        "tracking_id": "550e8400-e29b-41d4-a716-446655440001",
-        "timestamp": "2024-01-15T10:28:30.456Z",
-        "formatted_timestamp": "2024-01-15 10:28:30",
-        "source_attribution": "EdgeUp002",
-        "client_ip": "192.168.1.2",
-        "destination_url": "https://aws.amazon.com/cn/blogs/china/aws-lambda-function-urls/"
-      }
-      // Additional events...
-    ],
-    "total_count": 150,
-    "has_more": true
+  "region": "ap-northeast-1",
+  "allowedDomains": ["amazonaws.cn", "amazonaws.com", "amazon.com"],
+  "lambda": {
+    "redirectionMemory": 128,
+    "trackingMemory": 256,
+    "analyticsMemory": 256,
+    "timeout": 30
   },
-  "timestamp": "2024-01-16T08:45:30.123Z"
+  "waf": {
+    "rateLimit": 100,
+    "rateLimitWindow": 300
+  }
 }
 ```
 
-### Aggregate Endpoint
+## Monitoring and Operations
 
-The aggregate endpoint provides aggregated statistics on tracking data.
+### CloudWatch Alarms
 
-#### Endpoint
+The system includes comprehensive monitoring with the following alarms:
 
-```
-GET https://www.example.com/analytics/aggregate
-```
+- **Lambda Function Errors**: Alerts on function errors (>5 errors in 5 minutes)
+- **High Latency**: Alerts on slow response times
+- **DynamoDB Throttling**: Alerts on database throttling events
+- **SQS Queue Depth**: Alerts on high message queue depth
+- **Dead Letter Queue**: Alerts on any messages in DLQ
+- **API Gateway Errors**: Alerts on 4XX/5XX error rates
 
-#### Query Parameters
+### Operational Scripts
 
-The aggregate endpoint accepts the same filtering parameters as the query endpoint:
-
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| start_date | ISO 8601 date string | No | Filter events after this date |
-| end_date | ISO 8601 date string | No | Filter events before this date |
-| source_attribution | String | No | Filter by source attribution |
-| destination_url | String | No | Filter by destination URL (partial match) |
-
-#### Example Aggregate Requests
-
-**1. Basic Aggregation (All Data)**
+#### Monitor Dead Letter Queue
 
 ```bash
-curl -X GET "https://www.example.com/analytics/aggregate" \
-  -H "x-api-key: YOUR_API_KEY"
+# Check DLQ status
+./scripts/monitor-dlq.sh check
+
+# List messages in DLQ
+./scripts/monitor-dlq.sh list 10
+
+# Continuous monitoring
+./scripts/monitor-dlq.sh monitor 60
+
+# Get CloudWatch metrics
+./scripts/monitor-dlq.sh metrics 24
 ```
 
-**2. Aggregation by Date Range**
+#### System Monitoring
 
 ```bash
-curl -X GET "https://www.example.com/analytics/aggregate?start_date=2024-01-01T00:00:00.000Z&end_date=2024-01-31T23:59:59.999Z" \
-  -H "x-api-key: YOUR_API_KEY"
+# Monitor system health
+./scripts/system-monitor.sh
+
+# Check Lambda function metrics
+./scripts/system-monitor.sh lambda-metrics
+
+# Check DynamoDB metrics
+./scripts/system-monitor.sh dynamodb-metrics
 ```
 
-**3. Aggregation for Specific Source**
+#### Reprocess Failed Messages
 
 ```bash
-curl -X GET "https://www.example.com/analytics/aggregate?source_attribution=EdgeUp001" \
-  -H "x-api-key: YOUR_API_KEY"
+# Reprocess messages from DLQ
+./scripts/reprocess-messages.sh
+
+# Reprocess specific message
+./scripts/reprocess-messages.sh --message-id <message-id>
 ```
 
-#### Example Aggregate Response
+### Log Analysis
 
-```json
-{
-  "data": [
-    {
-      "source_attribution": "EdgeUp001",
-      "count": 120,
-      "unique_ips": 45,
-      "destinations": [
-        "https://aws.amazon.com/cn/blogs/china/new-aws-waf-antiddos-managed-rules/",
-        "https://aws.amazon.com/cn/blogs/china/aws-lambda-function-urls/"
-      ]
-    },
-    {
-      "source_attribution": "EdgeUp002",
-      "count": 85,
-      "unique_ips": 32,
-      "destinations": [
-        "https://aws.amazon.com/cn/blogs/china/aws-lambda-function-urls/",
-        "https://aws.amazon.com/cn/blogs/china/serverless-applications/"
-      ]
-    },
-    {
-      "source_attribution": "EdgeUp003",
-      "count": 65,
-      "unique_ips": 28,
-      "destinations": [
-        "https://aws.amazon.com/cn/blogs/china/dynamodb-best-practices/"
-      ]
-    }
-  ],
-  "timestamp": "2024-01-16T08:45:30.123Z"
-}
+Logs are structured in JSON format and sent to CloudWatch Logs. Each log entry includes:
+
+- Timestamp
+- Log level (DEBUG, INFO, WARN, ERROR)
+- Correlation ID for request tracing
+- Performance metrics
+- Contextual data
+
+Example log query in CloudWatch Insights:
+```sql
+fields @timestamp, level, message, context.correlationId, data
+| filter level = "ERROR"
+| sort @timestamp desc
+| limit 100
 ```
 
-## Error Handling
+## Development
 
-The API returns appropriate HTTP status codes and error messages:
+### Project Structure
 
-### Common Error Codes
-
-| Status Code | Description | Possible Causes |
-|-------------|-------------|----------------|
-| 400 | Bad Request | Invalid URL format, invalid domain, missing required parameters |
-| 401 | Unauthorized | Missing or invalid API key for analytics endpoints |
-| 403 | Forbidden | Rate limit exceeded |
-| 404 | Not Found | Endpoint not found |
-| 500 | Internal Server Error | Server-side error |
-
-### Example Error Response
-
-```json
-{
-  "error": "Invalid endpoint",
-  "timestamp": "2024-01-16T08:45:30.123Z",
-  "correlation_id": "550e8400-e29b-41d4-a716-446655440000",
-  "error_code": "INVALID_ENDPOINT"
-}
+```
+src/
+├── infrastructure/          # CDK infrastructure code
+│   ├── app.ts              # CDK app entry point
+│   └── stack.ts            # Main stack definition
+├── lambdas/                # Lambda function code
+│   ├── redirection/        # URL redirection handler
+│   ├── tracking/           # Tracking data processor
+│   └── analytics/          # Analytics API handler
+├── types/                  # TypeScript type definitions
+├── utils/                  # Shared utility functions
+│   ├── validation.ts       # URL and parameter validation
+│   ├── ip-extraction.ts    # IP address extraction
+│   ├── timestamp.ts        # Timestamp formatting
+│   └── logger.ts           # Structured logging
+└── __tests__/              # Integration tests
 ```
 
-## Best Practices
+### Running Tests
 
-### Querying Analytics Data
+```bash
+# Run all tests
+npm test
 
-1. **Use Specific Filters**: Narrow down your queries with specific date ranges or source attributions for better performance
-2. **Pagination**: Use the `limit` and `offset` parameters for large result sets
-3. **Date Ranges**: Always provide both `start_date` and `end_date` for time-based queries
-4. **Sorting**: Use `sort_order=asc` for chronological order or `sort_order=desc` (default) for most recent first
+# Run tests with coverage
+npm run test -- --coverage
 
-### Performance Considerations
+# Run specific test file
+npm test -- src/lambdas/redirection/__tests__/index.test.ts
 
-1. **Query Optimization**: Queries with source attribution are more efficient than date range queries
-2. **Result Limits**: Keep result limits reasonable (under 500) for better performance
-3. **Aggregation**: Use the aggregate endpoint for summary statistics instead of fetching all events
-4. **Rate Limiting**: The API is rate-limited to 10 requests per 5-minute window per IP address
+# Run tests in watch mode
+npm test -- --watch
 
-## Monitoring and Troubleshooting
+# Run tests with verbose output for debugging
+npm test -- --verbose
+```
 
-The service includes comprehensive monitoring through CloudWatch:
+**Note**: If you encounter test failures related to AWS SDK mocks, ensure that handler imports are placed after mock configurations in test files.
 
-- **CloudWatch Dashboard**: A dedicated dashboard for monitoring service metrics
-- **CloudWatch Logs**: Structured logs with correlation IDs for request tracing
-- **CloudWatch Alarms**: Configured alarms for error rates and performance thresholds
+### Local Development
 
-### Key Metrics
+```bash
+# Build TypeScript
+npm run build
 
-- **Lambda Invocations**: Number of function invocations
-- **Lambda Errors**: Error count for Lambda functions
-- **Lambda Duration**: Execution time for Lambda functions
-- **API Gateway Requests**: Number of API requests
-- **API Gateway Latency**: Response time for API requests
-- **DynamoDB Read/Write Capacity**: Consumed capacity units
-- **WAF Blocked Requests**: Number of requests blocked by WAF
+# Synthesize CDK template
+npm run synth
 
-## Load Testing
+# Run linting
+npm run lint
 
-The service includes load testing scripts to validate performance requirements. See the [load testing documentation](src/load-tests/README.md) for details.
+# Format code
+npm run format
+```
 
 ## Security
 
-The service implements several security measures:
+### Access Control
 
-- **AWS WAF**: Protection against common web exploits and rate limiting
-- **Input Validation**: Strict validation of all input parameters
-- **API Key Authentication**: Required for analytics endpoints
-- **Domain Restrictions**: Redirects only allowed to specific domains
+- API Gateway endpoints are protected by AWS WAF
+- Analytics endpoints (`/analytics/*`) and health endpoints (`/health*`) require API key authentication via `X-API-Key` header
+- Redirection endpoints (`/{proxy+}`) are publicly accessible
+- Rate limiting prevents abuse (10 requests per 5-minute window per IP)
+
+### Data Protection
+
+- All data is encrypted at rest in DynamoDB
+- Data in transit is encrypted using TLS
+- IP addresses are collected for analytics but can be anonymized if required
+
+### Allowed Domains
+
+The system only allows redirections to these domains:
+- `amazonaws.cn`
+- `amazonaws.com`
+- `amazon.com`
+
+### WAF Protection
+
+- SQL injection protection
+- XSS protection
+- Known bad inputs protection
+- Rate limiting by IP address
+
+## Troubleshooting
+
+### Common Issues
+
+#### CDK Version Compatibility
+
+If you encounter CDK schema version mismatch errors during deployment:
+
+1. Update CDK CLI to the latest version: `npm install -g aws-cdk@latest`
+2. Verify version compatibility: `cdk --version` (should be 2.1020.2 or later)
+3. Clear CDK cache if needed: `cdk context --clear`
+
+#### Test Failures During Deployment
+
+If tests fail during deployment:
+
+1. Run tests individually to identify issues: `npm test -- --verbose`
+2. Use `--skip-tests` flag for deployment if tests are not critical: `./scripts/deploy.sh --skip-tests`
+3. Check mock configurations in test files, especially import order for AWS SDK mocks
+
+#### High DLQ Message Count
+
+1. Check DLQ messages: `./scripts/monitor-dlq.sh list`
+2. Analyze message patterns: `./scripts/monitor-dlq.sh analyze`
+3. Reprocess valid messages: `./scripts/reprocess-messages.sh`
+
+#### Lambda Function Errors
+
+1. Check CloudWatch logs for error details
+2. Verify environment variables are set correctly
+3. Check DynamoDB table permissions
+4. Verify SQS queue permissions
+
+#### High Latency
+
+1. Check DynamoDB performance metrics
+2. Review Lambda function memory allocation
+3. Analyze query patterns for optimization opportunities
+
+### Performance Optimization
+
+- Use DynamoDB Global Secondary Indexes for efficient queries
+- Implement connection pooling for database connections
+- Optimize Lambda memory allocation based on usage patterns
+- Use SQS batching for improved throughput
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feature-name`
+3. Make changes and add tests
+4. Run tests: `npm test`
+5. Commit changes: `git commit -am 'Add feature'`
+6. Push to branch: `git push origin feature-name`
+7. Submit a pull request
+
+### Code Standards
+
+- Use TypeScript for all code
+- Follow ESLint configuration
+- Write unit tests for all functions
+- Use structured logging
+- Document all public APIs
 
 ## License
 
-MIT
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## Support
+
+For support and questions:
+
+1. Check the troubleshooting section above
+2. Review CloudWatch logs and metrics
+3. Use the monitoring scripts for diagnostics
+4. Create an issue in the repository
+
+## Changelog
+
+### Version 1.0.1
+- Fixed CDK version compatibility issues
+- Resolved test mock configuration problems
+- Updated deployment script to handle test failures gracefully
+- Improved error handling and debugging information
+
+### Version 1.0.0
+- Initial release with URL redirection and tracking
+- Analytics API with query and aggregation endpoints
+- Comprehensive monitoring and alerting
+- Security features with WAF protection
+- Operational scripts for monitoring and maintenance
