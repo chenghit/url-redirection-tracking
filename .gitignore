@@ -125,3 +125,6 @@ Thumbs.db
 
 # Local development files
 *.local
+
+# Architecture diagram generation script
+architecture-diagram.py

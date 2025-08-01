@@ -17,20 +17,79 @@ This system provides secure URL redirection services with comprehensive tracking
 
 ## Architecture
 
-The system consists of three main Lambda functions:
+The URL Redirection Tracking System is built using a serverless architecture on AWS, designed for high availability, scalability, and cost-effectiveness. The system processes URL redirection requests while capturing comprehensive analytics data for business intelligence.
 
-1. **Redirection Lambda**: Handles incoming URL redirection requests
-2. **Tracking Lambda**: Processes tracking data asynchronously via SQS
-3. **Analytics Lambda**: Provides API endpoints for querying tracking data
+![Main Architecture](docs/architecture/url-redirection-architecture.png)
 
-### Infrastructure Components
+### System Overview
 
-- **API Gateway**: Regional endpoint for handling HTTP requests
-- **AWS Lambda**: Serverless compute for business logic
-- **DynamoDB**: NoSQL database for storing tracking events
-- **SQS**: Message queue for asynchronous tracking processing
-- **CloudWatch**: Monitoring, logging, and alerting
-- **AWS WAF**: Web application firewall for security
+The architecture consists of three main Lambda functions working together:
+
+1. **Redirection Lambda**: Handles incoming URL redirection requests with real-time validation
+2. **Tracking Lambda**: Processes tracking data asynchronously via SQS for reliable data persistence
+3. **Analytics Lambda**: Provides RESTful API endpoints for querying and aggregating tracking data
+
+### Core Infrastructure Components
+
+- **API Gateway (Regional)**: Entry point for all HTTP requests with built-in throttling
+- **AWS WAF**: Web application firewall providing security protection and rate limiting
+- **AWS Lambda**: Serverless compute functions for business logic processing
+- **DynamoDB**: NoSQL database with Global Secondary Indexes for efficient querying
+- **SQS FIFO Queue**: Message queue ensuring ordered, exactly-once processing
+- **CloudWatch**: Comprehensive monitoring, logging, and alerting system
+
+### Data Flow Architecture
+
+![Data Flow](docs/architecture/url-redirection-dataflow.png)
+
+The request processing follows this flow:
+
+1. **User Request**: Client sends GET request with URL and optional source attribution
+2. **Security Layer**: AWS WAF filters malicious traffic and enforces rate limits
+3. **API Gateway**: Routes requests to appropriate Lambda functions
+4. **Validation**: Redirection Lambda validates URL format and allowed domains
+5. **Tracking Generation**: Creates tracking data with UUID, timestamp, and client information
+6. **Async Processing**: Sends tracking message to SQS FIFO queue for reliable processing
+7. **Data Persistence**: Tracking Lambda batch processes messages and stores in DynamoDB
+8. **User Response**: Returns 302 redirect response to client
+
+### Monitoring & Observability
+
+![Monitoring Architecture](docs/architecture/monitoring-architecture.png)
+
+The system includes comprehensive monitoring with:
+
+- **13+ CloudWatch Alarms** monitoring errors, latency, and system health
+- **Structured JSON Logging** with correlation IDs for request tracing
+- **Performance Metrics** for all components (Lambda, API Gateway, DynamoDB, SQS)
+- **SNS Notifications** for critical alerts
+- **Health Check Endpoints** for system status monitoring
+
+### Key Architectural Features
+
+#### Security
+- **Domain Validation**: Only allows redirections to authorized domains (amazonaws.cn, amazonaws.com, amazon.com)
+- **Rate Limiting**: 10 requests per 5-minute window per IP address
+- **API Key Protection**: Analytics endpoints require authentication
+- **WAF Protection**: SQL injection, XSS, and known bad inputs filtering
+
+#### Reliability
+- **FIFO Queue Processing**: Ensures ordered message processing with deduplication
+- **Dead Letter Queue**: Handles failed messages with retry logic (max 3 attempts)
+- **Point-in-Time Recovery**: DynamoDB backup for data protection
+- **Batch Processing**: Efficient handling of up to 25 DynamoDB writes per batch
+
+#### Performance
+- **Global Secondary Indexes**: Optimized queries by source attribution and timestamp
+- **Pay-per-Request Billing**: DynamoDB scales automatically with demand
+- **Connection Pooling**: Efficient database connections in Lambda functions
+- **Long Polling**: SQS reduces empty receives and improves cost efficiency
+
+#### Scalability
+- **Serverless Architecture**: Automatically scales based on demand
+- **Regional Deployment**: Currently deployed in ap-northeast-1 (Tokyo)
+- **Concurrent Execution Limits**: Controlled DynamoDB write capacity usage
+- **Message Grouping**: FIFO queue groups by client IP for parallel processing
 
 ## Getting Started
 
@@ -308,6 +367,15 @@ src/
 │   ├── timestamp.ts        # Timestamp formatting
 │   └── logger.ts           # Structured logging
 └── __tests__/              # Integration tests
+
+docs/
+└── architecture/           # Architecture documentation
+    ├── url-redirection-architecture.png    # Main system architecture
+    ├── url-redirection-dataflow.png        # Data flow diagram
+    └── monitoring-architecture.png         # Monitoring setup
+
+config/                     # Environment-specific configurations
+scripts/                    # Deployment and operational scripts
 ```
 
 ### Running Tests
@@ -421,6 +489,37 @@ If tests fail during deployment:
 - Implement connection pooling for database connections
 - Optimize Lambda memory allocation based on usage patterns
 - Use SQS batching for improved throughput
+
+## Architecture Documentation
+
+The system architecture is documented through three comprehensive diagrams located in `docs/architecture/`:
+
+### 1. Main Architecture Diagram (`url-redirection-architecture.png`)
+Shows the complete AWS serverless infrastructure including:
+- All AWS services and their relationships
+- Security layers (WAF, API Keys)
+- Data flow between components
+- Monitoring and alerting setup
+
+### 2. Data Flow Diagram (`url-redirection-dataflow.png`)
+Illustrates the step-by-step request processing flow:
+- User request validation and processing
+- Asynchronous tracking message handling
+- Database persistence operations
+- Response generation and delivery
+
+### 3. Monitoring Architecture (`monitoring-architecture.png`)
+Details the observability and alerting infrastructure:
+- CloudWatch metrics collection
+- Alarm configuration and thresholds
+- SNS notification setup
+- Health check endpoints
+
+These diagrams provide visual documentation for:
+- **System Design Reviews**: Understanding component interactions
+- **Troubleshooting**: Identifying failure points and dependencies
+- **Onboarding**: Helping new team members understand the architecture
+- **Compliance**: Documenting security and monitoring controls
 
 ## Contributing
 
