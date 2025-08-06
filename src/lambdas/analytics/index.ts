@@ -219,42 +219,53 @@ async function queryBySourceAttribution(query: AnalyticsQuery, logger: Structure
 
 /**
  * Query DynamoDB using GSI2 (formatted_timestamp)
+ * Note: GSI2 has formatted_timestamp as partition key only, so we can't do range queries
+ * We'll use table scan with time filtering instead
  */
 async function queryByTimeRange(query: AnalyticsQuery, logger: StructuredLogger): Promise<{ events: TrackingEvent[], totalCount: number }> {
-  // Convert ISO dates to formatted timestamps for GSI2 query
-  const startFormatted = query.start_date ? convertToFormattedTimestamp(query.start_date) : undefined;
-  const endFormatted = query.end_date ? convertToFormattedTimestamp(query.end_date) : undefined;
-
+  logger.info('GSI2 cannot perform range queries - using table scan with time filtering instead');
+  
   const params: any = {
-    TableName: TABLE_NAME,
-    IndexName: GSI2_NAME,
-    ScanIndexForward: query.sort_order === 'asc'
+    TableName: TABLE_NAME
   };
 
-  if (startFormatted && endFormatted) {
-    params.KeyConditionExpression = 'formatted_timestamp BETWEEN :start AND :end';
-    params.ExpressionAttributeValues = {
-      ':start': startFormatted,
-      ':end': endFormatted
-    };
-  } else if (startFormatted) {
-    params.KeyConditionExpression = 'formatted_timestamp >= :start';
-    params.ExpressionAttributeValues = {
-      ':start': startFormatted
-    };
-  } else if (endFormatted) {
-    params.KeyConditionExpression = 'formatted_timestamp <= :end';
-    params.ExpressionAttributeValues = {
-      ':end': endFormatted
-    };
+  // Build filter expression for time range
+  const filterExpressions: string[] = [];
+  const expressionAttributeValues: any = {};
+  const expressionAttributeNames: any = {};
+
+  if (query.start_date) {
+    filterExpressions.push('#ts >= :start_date');
+    expressionAttributeValues[':start_date'] = query.start_date;
+    expressionAttributeNames['#ts'] = 'timestamp';
   }
 
-  const command = new QueryCommand(params);
+  if (query.end_date) {
+    filterExpressions.push('#ts <= :end_date');
+    expressionAttributeValues[':end_date'] = query.end_date;
+    expressionAttributeNames['#ts'] = 'timestamp';
+  }
+
+  if (filterExpressions.length > 0) {
+    params.FilterExpression = filterExpressions.join(' AND ');
+    params.ExpressionAttributeValues = expressionAttributeValues;
+    params.ExpressionAttributeNames = expressionAttributeNames;
+  }
+
+  const command = new ScanCommand(params);
   const queryStartTime = Date.now();
   const result = await docClient.send(command);
   const queryDuration = Date.now() - queryStartTime;
 
-  logger.info('GSI2 query completed', {
+  let events = result.Items as TrackingEvent[] || [];
+
+  // Sort results by timestamp
+  events.sort((a, b) => {
+    const comparison = new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime();
+    return query.sort_order === 'asc' ? comparison : -comparison;
+  });
+
+  logger.info('Time-based scan completed', {
     itemCount: result.Count || 0,
     scannedCount: result.ScannedCount || 0,
     duration: queryDuration,
@@ -262,8 +273,8 @@ async function queryByTimeRange(query: AnalyticsQuery, logger: StructuredLogger)
   });
 
   return {
-    events: result.Items as TrackingEvent[] || [],
-    totalCount: result.Count || 0
+    events,
+    totalCount: events.length
   };
 }
 
