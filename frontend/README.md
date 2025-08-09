@@ -211,85 +211,114 @@ npm install
 
 #### **Step 4: Build the Application**
 
-**Current Status:**
-✅ **Fixed**: The build script now works from both locations:
-- From project root: `./scripts/build-frontend.sh`
-- From frontend directory: `../scripts/build-frontend.sh` or `npm run build:production`
+Choose the appropriate build method for your needs:
 
-The build script automatically detects the execution context and handles relative paths correctly.
-
-**Build Options:**
-
-Choose the appropriate build command for your target environment:
-
-**1. Quick build (recommended for deployment - skips problematic checks):**
+**Option 1: Simple build (Recommended for most users)**
 ```bash
-# For production deployment
-npm run build:production -- --skip-lint --skip-typecheck
-
-# For staging deployment
-npm run build:staging -- --skip-lint --skip-typecheck
-
-# For development deployment
-npm run build:development -- --skip-lint --skip-typecheck
-```
-
-**2. Standard build (if you fix the ESLint errors):**
-```bash
-# For production deployment
-npm run build:production
-
-# For staging deployment
-npm run build:staging
-
-# For development deployment
-npm run build:development
-```
-
-**3. Direct Vite build (simplest):**
-```bash
-# Basic Vite build without additional checks
+# Basic Vite build with default settings
 npm run build
 ```
 
-**4. Custom build with specific options:**
+**Option 2: Environment-specific builds**
 ```bash
-# Build with custom flags
-../scripts/build-frontend.sh -e production --skip-lint --clean
+# For production deployment (equivalent to -e production)
+npm run build:production
 
-# Available flags:
-# --skip-lint            Skip linting
-# --skip-typecheck       Skip TypeScript type checking
-# --clean                Clean build directory before building
+# For staging deployment (equivalent to -e staging)  
+npm run build:staging
+
+# For development deployment (equivalent to -e development)
+npm run build:development
 ```
 
+**Option 3: Direct script usage with custom flags (Advanced users)**
+```bash
+# Production build with custom options
+../scripts/build-frontend.sh -e production --skip-lint --skip-typecheck
+
+# Available flags:
+# -e, --environment ENV    Set environment (development, staging, production)
+# --skip-lint             Skip ESLint checking
+# --skip-typecheck        Skip TypeScript type checking  
+# --skip-tests            Skip running tests (already skipped by default)
+# --clean                 Clean build directory before building
+```
+
+**Important Notes:**
+- The `:production`, `:staging`, `:development` suffixes are **optional convenience scripts**
+- They are equivalent to running the base script with the `-e <environment>` flag
+- If you encounter linting or type checking errors, use the `--skip-lint` and `--skip-typecheck` flags with the direct script approach
+- The npm script approach (`npm run build:production -- --skip-lint`) **does not work** - use the direct script approach instead
+
 **Build Output:**
-The build process produces a ~560KB optimized production bundle in the `dist/` directory with:
+The build process produces an optimized production bundle (~560KB) in the `dist/` directory with:
 - Minified and compressed assets
 - Build manifest with deployment metadata
-- Proper cache headers and content types
 - Security validation (no hardcoded secrets or URLs)
-- ESLint warnings (non-blocking) for code quality
+- Proper cache headers and content types
 
 #### **Step 5: Upload Assets to S3**
-Upload the built application to the S3 bucket and invalidate CloudFront cache:
 
+Deploy the built application to AWS S3 and invalidate CloudFront cache:
+
+**Option 1: Simple deployment (Recommended)**
 ```bash
-# Deploy to production environment (uploads to S3 and invalidates CloudFront)
+# Deploy with default settings
+npm run deploy
+```
+
+**Option 2: Environment-specific deployments**
+```bash
+# Deploy to production environment
 npm run deploy:production
 
-# Deploy to staging environment
+# Deploy to staging environment  
 npm run deploy:staging
 
 # Deploy to development environment
 npm run deploy:development
 ```
 
-**What this does:**
+**Option 3: Direct script usage with custom options (Advanced users)**
+```bash
+# Deploy with custom AWS profile and region
+../scripts/deploy-frontend.sh -e production -p your-aws-profile -r ap-northeast-1
+
+# Available flags:
+# -e, --environment ENV    Set environment (development, staging, production)
+# -p, --profile PROFILE    AWS profile name (default: primary)
+# -r, --region REGION      AWS region (default: ap-northeast-1)
+# --skip-backup           Skip creating backup before deployment
+# --wait-for-invalidation Wait for CloudFront invalidation to complete
+```
+
+**What the deployment does:**
 - Uploads built assets (HTML, CSS, JS, images) to the S3 bucket
-- Sets appropriate content types and cache headers
+- Sets appropriate content types and cache headers for optimal performance
 - Creates CloudFront cache invalidation for immediate updates
-- Verifies successful deployment
+- Verifies successful deployment and provides access URLs
+
+**Important Notes:**
+- The `:production`, `:staging`, `:development` suffixes are **optional convenience scripts**
+- They set the environment and call the underlying deployment script
+- Environment-specific deployment uses different S3 buckets and CloudFront distributions
+- CloudFront propagation may take 5-15 minutes for global availability
+
+**Expected Output:**
+```
+✅ Deployment completed successfully!
+
+📊 Frontend Dashboard URLs:
+   Production:  https://d1234567890abc.cloudfront.net
+   Staging:     https://d0987654321def.cloudfront.net
+
+🔧 Infrastructure Details:
+   S3 Bucket:           url-redirection-frontend-abc123
+   CloudFront ID:       E1234567890ABC
+   Origin Access Control: E0987654321DEF
+
+⏱️  CloudFront propagation may take 5-15 minutes for global availability.
+```
 
 #### **Step 6: Verify Deployment**
 After deployment completes, you'll receive output similar to:

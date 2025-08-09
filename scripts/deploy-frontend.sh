@@ -9,9 +9,32 @@ set -e  # Exit on any error
 REGION="ap-northeast-1"
 PROFILE="${AWS_PROFILE:-primary}"
 ENVIRONMENT="${ENVIRONMENT:-production}"
-FRONTEND_DIR="frontend"
-BUILD_DIR="$FRONTEND_DIR/dist"
 FRONTEND_STACK_NAME="FrontendStack"
+
+# Determine the correct paths based on current working directory
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
+CURRENT_DIR="$(pwd)"
+
+# Check if we're running from the frontend directory or project root
+if [[ "$(basename "$CURRENT_DIR")" == "frontend" ]]; then
+    # Running from frontend directory
+    BUILD_DIR="dist"
+    FRONTEND_DIR="."
+elif [[ -d "$CURRENT_DIR/frontend" ]]; then
+    # Running from project root
+    BUILD_DIR="frontend/dist"
+    FRONTEND_DIR="frontend"
+else
+    # Try to find the frontend directory
+    if [[ -d "$PROJECT_ROOT/frontend" ]]; then
+        BUILD_DIR="$PROJECT_ROOT/frontend/dist"
+        FRONTEND_DIR="$PROJECT_ROOT/frontend"
+    else
+        error "Cannot locate frontend directory. Please run from project root or frontend directory."
+        exit 1
+    fi
+fi
 
 # Colors for output
 RED='\033[0;31m'
@@ -412,6 +435,9 @@ main() {
     log "Environment: $ENVIRONMENT"
     log "Region: $REGION"
     log "Profile: $PROFILE"
+    log "Current directory: $CURRENT_DIR"
+    log "Project root: $PROJECT_ROOT"
+    log "Frontend directory: $FRONTEND_DIR"
     log "Build directory: $BUILD_DIR"
     
     # Check prerequisites
