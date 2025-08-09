@@ -67,7 +67,7 @@ describe('LineChart', () => {
     
     const chart = screen.getByTestId('line-chart');
     expect(chart).toBeInTheDocument();
-    expect(chart).toHaveAttribute('aria-label', 'Line chart displaying URL redirection trends over time');
+    expect(chart).toHaveAttribute('aria-label', 'Interactive line chart displaying URL redirection trends over time. Use arrow keys to navigate data points.');
   });
 
   it('displays loading state', () => {
@@ -214,7 +214,7 @@ describe('LineChart', () => {
     expect(container).toHaveAttribute('aria-label', 'Time series chart showing URL redirections over time');
     
     const chart = screen.getByTestId('line-chart');
-    expect(chart).toHaveAttribute('aria-label', 'Line chart displaying URL redirection trends over time');
+    expect(chart).toHaveAttribute('aria-label', 'Interactive line chart displaying URL redirection trends over time. Use arrow keys to navigate data points.');
   });
 
   it('configures chart options correctly', () => {

@@ -532,6 +532,40 @@ The system only allows redirections to these domains:
 
 ### Common Issues
 
+#### Frontend Build Issues
+
+If you encounter linting or test failures during frontend build, here are the solutions:
+
+**Linting Issues:**
+- Most linting warnings about `any` types are acceptable for chart libraries and can be ignored
+- Critical errors (like syntax errors) should be fixed before deployment
+- You can run `npm run lint -- --fix` in the frontend directory to auto-fix many issues
+
+**Test Failures:**
+- Some tests may fail due to environment differences or missing dependencies
+- For production deployment, you can temporarily skip tests: `./scripts/build-frontend.sh --skip-tests`
+- However, it's recommended to fix failing tests for code quality
+
+**Node.js Version Compatibility:**
+- The frontend uses Vite 7.0.6 which requires Node.js ^20.19.0 or >=22.12.0
+- If you see engine warnings, consider updating Node.js or use `--force` flag: `npm install --force`
+
+**Build Script Options:**
+The build script supports several flags to handle common issues:
+```bash
+# Skip linting (for quick builds)
+./scripts/build-frontend.sh --skip-lint
+
+# Skip tests (for deployment with known test issues)
+./scripts/build-frontend.sh --skip-tests
+
+# Skip both (fastest build, use with caution)
+./scripts/build-frontend.sh --skip-lint --skip-tests
+
+# Clean build (removes previous build artifacts)
+./scripts/build-frontend.sh --clean
+```
+
 #### CDK Version Compatibility
 
 If you encounter CDK schema version mismatch errors during deployment:

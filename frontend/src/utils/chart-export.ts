@@ -215,12 +215,13 @@ export function exportMultipleCharts(
         totalWidth = Math.max(...chartDimensions.map(dim => dim.width));
         totalHeight = chartDimensions.reduce((sum, dim) => sum + dim.height, 0);
         break;
-      case 'grid':
+      case 'grid': {
         const cols = Math.ceil(Math.sqrt(validCharts.length));
         const rows = Math.ceil(validCharts.length / cols);
         totalWidth = cols * Math.max(...chartDimensions.map(dim => dim.width));
         totalHeight = rows * Math.max(...chartDimensions.map(dim => dim.height));
         break;
+      }
     }
 
     // Create combined canvas
@@ -267,7 +268,7 @@ export function exportMultipleCharts(
         case 'vertical':
           currentY += canvas.height + (title ? 30 : 0);
           break;
-        case 'grid':
+        case 'grid': {
           const cols = Math.ceil(Math.sqrt(validCharts.length));
           const maxWidth = Math.max(...chartDimensions.map(dim => dim.width));
           const maxHeight = Math.max(...chartDimensions.map(dim => dim.height));
@@ -279,6 +280,7 @@ export function exportMultipleCharts(
             currentX += maxWidth;
           }
           break;
+        }
       }
       
       // Reset Y position for horizontal layout

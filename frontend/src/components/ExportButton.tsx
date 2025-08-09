@@ -77,23 +77,25 @@ const ExportButton: React.FC<ExportButtonProps> = ({
 
     try {
       switch (type) {
-        case 'events':
+        case 'events': {
           const eventsValidation = validateExportData(events);
           if (!eventsValidation.isValid) {
             throw new Error(eventsValidation.message);
           }
           exportEventsToCSV(events, generateCSVFilename('tracking-events'));
           break;
+        }
 
-        case 'aggregate':
+        case 'aggregate': {
           const statsValidation = validateExportData(aggregateStats);
           if (!statsValidation.isValid) {
             throw new Error(statsValidation.message);
           }
           exportAggregateStatsToCSV(aggregateStats, generateCSVFilename('aggregate-stats'));
           break;
+        }
 
-        case 'combined':
+        case 'combined': {
           const eventsValid = validateExportData(events);
           const statsValid = validateExportData(aggregateStats);
           
@@ -107,6 +109,7 @@ const ExportButton: React.FC<ExportButtonProps> = ({
             generateCSVFilename('analytics-combined')
           );
           break;
+        }
 
         default:
           throw new Error('Invalid export type');
