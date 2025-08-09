@@ -69,16 +69,27 @@ check_prerequisites() {
         exit 1
     fi
     
-    # Check if frontend directory exists
-    if [ ! -d "$FRONTEND_DIR" ]; then
-        error "Frontend directory '$FRONTEND_DIR' does not exist."
-        exit 1
-    fi
-    
-    # Check if package.json exists
-    if [ ! -f "$FRONTEND_DIR/package.json" ]; then
-        error "package.json not found in '$FRONTEND_DIR' directory."
-        exit 1
+    # Check if we can access the frontend directory
+    if [ "$FRONTEND_DIR" = "." ]; then
+        # We're in the frontend directory, check current directory
+        if [ ! -f "package.json" ]; then
+            error "package.json not found in current directory. Are you in the frontend directory?"
+            exit 1
+        fi
+        if [ ! -f "vite.config.ts" ]; then
+            error "vite.config.ts not found. This doesn't appear to be a frontend directory."
+            exit 1
+        fi
+    else
+        # We're in project root, check frontend subdirectory
+        if [ ! -d "$FRONTEND_DIR" ]; then
+            error "Frontend directory '$FRONTEND_DIR' does not exist."
+            exit 1
+        fi
+        if [ ! -f "$FRONTEND_DIR/package.json" ]; then
+            error "package.json not found in '$FRONTEND_DIR' directory."
+            exit 1
+        fi
     fi
     
     success "All prerequisites are met"
