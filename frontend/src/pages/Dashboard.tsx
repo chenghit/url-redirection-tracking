@@ -55,15 +55,19 @@ const Dashboard: React.FC = () => {
 
       // Add date range filters if set
       if (filters.dateRange.start) {
-        const startDate = filters.dateRange.start.toISOString().split('T')[0];
-        queryFilters.start_date = startDate;
-        aggregateFilters.start_date = startDate; // ✅ Now supported by aggregate endpoint
+        // Use ISO 8601 format as required by the API
+        const startDate = new Date(filters.dateRange.start);
+        startDate.setHours(0, 0, 0, 0); // Set to start of day
+        queryFilters.start_date = startDate.toISOString();
+        aggregateFilters.start_date = startDate.toISOString(); // ✅ Now supported by aggregate endpoint
       }
 
       if (filters.dateRange.end) {
-        const endDate = filters.dateRange.end.toISOString().split('T')[0];
-        queryFilters.end_date = endDate;
-        aggregateFilters.end_date = endDate; // ✅ Now supported by aggregate endpoint
+        // Use ISO 8601 format as required by the API
+        const endDate = new Date(filters.dateRange.end);
+        endDate.setHours(23, 59, 59, 999); // Set to end of day
+        queryFilters.end_date = endDate.toISOString();
+        aggregateFilters.end_date = endDate.toISOString(); // ✅ Now supported by aggregate endpoint
       }
 
       // Add source attribution filter if set
