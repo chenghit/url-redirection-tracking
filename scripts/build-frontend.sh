@@ -7,14 +7,25 @@ set -e  # Exit on any error
 
 # Configuration
 # Detect if we're running from within the frontend directory
-if [ -f "package.json" ] && [ -f "vite.config.ts" ] && [ -d "src" ]; then
+# Check for frontend-specific files that wouldn't exist in project root
+if [ -f "package.json" ] && [ -f "vite.config.ts" ] && [ -d "src" ] && [ -f "index.html" ]; then
     # We're in the frontend directory
     FRONTEND_DIR="."
     BUILD_DIR="dist"
-else
+elif [ -d "frontend" ] && [ -f "frontend/package.json" ] && [ -f "frontend/vite.config.ts" ]; then
     # We're in the project root
     FRONTEND_DIR="frontend"
     BUILD_DIR="$FRONTEND_DIR/dist"
+else
+    # Fallback: try to determine based on current directory name
+    CURRENT_DIR=$(basename "$(pwd)")
+    if [ "$CURRENT_DIR" = "frontend" ]; then
+        FRONTEND_DIR="."
+        BUILD_DIR="dist"
+    else
+        FRONTEND_DIR="frontend"
+        BUILD_DIR="$FRONTEND_DIR/dist"
+    fi
 fi
 ENVIRONMENT="${ENVIRONMENT:-production}"
 
