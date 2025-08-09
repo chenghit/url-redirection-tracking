@@ -1,8 +1,0 @@
-{
-  "status": "healthy",
-  "timestamp": "2024-01-15T15:00:00Z",
-  "service": "analytics-api",
-  "version": "1.0.0",
-  "region": "us-east-1",
-  "environment": "production"
-}
