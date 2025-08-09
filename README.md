@@ -1,19 +1,40 @@
 # URL Redirection Tracking System
 
-A serverless URL redirection and tracking application built on AWS using CDK, designed to handle URL redirections while capturing detailed analytics data for business intelligence purposes.
+A comprehensive serverless URL redirection and analytics platform built on AWS, featuring a robust backend API and a modern React-based web dashboard for real-time monitoring and business intelligence.
 
 ## Overview
 
-This system provides secure URL redirection services with comprehensive tracking capabilities. It's built using AWS serverless technologies and follows best practices for scalability, security, and observability.
+This system provides secure URL redirection services with comprehensive tracking capabilities and an intuitive web interface for data analysis. It's built using AWS serverless technologies and follows best practices for scalability, security, and observability.
 
-### Key Features
+### Complete System Components
 
+#### **Backend Infrastructure** (Serverless API)
 - **Secure URL Redirection**: Only allows redirections to authorized domains (amazonaws.cn, amazonaws.com, amazon.com)
 - **Real-time Tracking**: Captures detailed analytics data including IP addresses, timestamps, and source attribution
 - **Scalable Architecture**: Serverless design that automatically scales based on demand
 - **Comprehensive Monitoring**: Built-in CloudWatch alarms and health checks
 - **Security**: WAF protection with rate limiting and common attack prevention
 - **Analytics API**: RESTful API for querying and aggregating tracking data
+
+#### **Frontend Dashboard** (React Web Application)
+📋 **[Complete Frontend Documentation →](frontend/README.md)**
+
+- **Interactive Analytics Dashboard**: Real-time KPIs, charts, and data visualizations
+- **Advanced Data Analysis**: Filtering, sorting, and export capabilities for business intelligence
+- **System Health Monitoring**: Component-specific monitoring and diagnostics
+- **Mobile-Responsive Design**: Accessible on desktop, tablet, and mobile devices
+- **WCAG 2.1 AA Compliance**: Fully accessible interface with screen reader support
+
+### Key Features
+
+- **🔗 URL Redirection**: Secure, validated redirections with comprehensive logging
+- **📊 Real-time Analytics**: Interactive dashboards with KPIs, trends, and insights
+- **🛡️ Enterprise Security**: WAF protection, rate limiting, and domain validation
+- **📱 Multi-Device Access**: Responsive web interface for all screen sizes
+- **⚡ High Performance**: Global CDN delivery with sub-second response times
+- **🔍 Advanced Filtering**: Query data by date ranges, sources, and destinations
+- **📈 Data Export**: CSV/JSON export for reporting and further analysis
+- **🏥 Health Monitoring**: Real-time system status and performance metrics
 
 ## Architecture
 
@@ -125,16 +146,19 @@ npm test
 
 ### Deployment
 
-#### Quick Deployment
+This system consists of two main components that need to be deployed:
 
-Deploy to development environment:
+#### **Backend Infrastructure Deployment** (Required First)
+
+Deploy the serverless backend infrastructure:
+
+**Quick Deployment:**
 ```bash
+# Deploy backend to development environment
 ./scripts/deploy.sh
 ```
 
-#### Custom Deployment
-
-Deploy with specific options:
+**Custom Deployment:**
 ```bash
 # Deploy to production environment
 ./scripts/deploy.sh -e prod -p production
@@ -147,6 +171,57 @@ Deploy with specific options:
 
 # Skip tests during deployment
 ./scripts/deploy.sh --skip-tests
+```
+
+#### **Frontend Dashboard Deployment** (Optional)
+
+Deploy the React-based web dashboard for analytics and monitoring:
+
+📋 **[Complete Frontend Deployment Guide →](frontend/README.md#-deployment-guide)**
+
+**Quick Frontend Deployment:**
+```bash
+# 1. Setup environment (CRITICAL - must be done first)
+./scripts/setup-frontend-config.sh
+
+# 2. Deploy frontend infrastructure
+cdk deploy FrontendStack
+
+# 3. Build and deploy frontend
+cd frontend
+npm install
+npm run build:production
+npm run deploy:production
+```
+
+**Note**: The backend infrastructure must be deployed first, as the frontend depends on the backend API Gateway and requires API keys for authentication.
+
+### Accessing the Deployed System
+
+#### **Web Dashboard** (Frontend)
+After deploying the frontend, access the analytics dashboard via the CloudFront URL:
+```bash
+# Get the frontend URL
+aws cloudformation describe-stacks \
+  --stack-name FrontendStack \
+  --query 'Stacks[0].Outputs[?OutputKey==`FrontendCloudFrontDistributionUrl`].OutputValue' \
+  --output text
+```
+
+**Dashboard Features:**
+- **Main Dashboard** (`/`) - Real-time KPIs and analytics overview
+- **Analytics Page** (`/analytics`) - Advanced filtering and data analysis
+- **Health Monitoring** (`/health`) - System status and performance metrics
+
+#### **API Endpoints** (Backend)
+Access the backend API directly for programmatic integration:
+```bash
+# Get API Gateway URL
+./scripts/get-api-key.sh
+
+# Example API calls
+curl "https://your-api-gateway-url/prod/redirect?url=https://aws.amazon.com&sa=EdgeUp001"
+curl -H "X-API-Key: your-api-key" "https://your-api-gateway-url/prod/analytics/query"
 ```
 
 #### Manual CDK Deployment
@@ -219,8 +294,17 @@ Get aggregated statistics grouped by source attribution.
 
 **Example:**
 ```bash
+# Get all aggregated statistics
 curl -H "X-API-Key: your-api-key" \
   "https://api-gateway-url.amazonaws.com/prod/analytics/aggregate"
+
+# Get aggregated statistics for a specific date range
+curl -H "X-API-Key: your-api-key" \
+  "https://api-gateway-url.amazonaws.com/prod/analytics/aggregate?start_date=2024-01-01T00:00:00Z&end_date=2024-01-31T23:59:59Z"
+
+# Get aggregated statistics for a specific source attribution with date filtering
+curl -H "X-API-Key: your-api-key" \
+  "https://api-gateway-url.amazonaws.com/prod/analytics/aggregate?source_attribution=EdgeUp001&start_date=2025-08-01T00:00:00Z&end_date=2025-08-31T23:59:59Z"
 ```
 
 #### Health Checks

@@ -1,0 +1,49 @@
+{
+  "data": [
+    {
+      "source_attribution": "google.com",
+      "count": 150,
+      "unique_ips": 75,
+      "destinations": [
+        "https://example.com/page1",
+        "https://example.com/page5",
+        "https://example.com/page8"
+      ]
+    },
+    {
+      "source_attribution": "facebook.com",
+      "count": 89,
+      "unique_ips": 45,
+      "destinations": [
+        "https://example.com/page2",
+        "https://example.com/page6"
+      ]
+    },
+    {
+      "source_attribution": "twitter.com",
+      "count": 67,
+      "unique_ips": 34,
+      "destinations": [
+        "https://example.com/page3",
+        "https://example.com/page7"
+      ]
+    },
+    {
+      "source_attribution": "linkedin.com",
+      "count": 45,
+      "unique_ips": 28,
+      "destinations": [
+        "https://example.com/page4"
+      ]
+    },
+    {
+      "source_attribution": "direct",
+      "count": 23,
+      "unique_ips": 15,
+      "destinations": [
+        "https://example.com/page9"
+      ]
+    }
+  ],
+  "timestamp": "2024-01-15T15:00:00Z"
+}

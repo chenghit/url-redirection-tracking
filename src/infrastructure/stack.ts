@@ -11,6 +11,10 @@ import * as sns from 'aws-cdk-lib/aws-sns';
 import { Construct } from 'constructs';
 
 export class UrlRedirectionTrackingStack extends cdk.Stack {
+  public readonly apiGatewayUrl: string;
+  public readonly apiKeyId: string;
+  public readonly apiKeyValue: string;
+
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
@@ -605,9 +609,19 @@ export class UrlRedirectionTrackingStack extends cdk.Stack {
       description: 'API Key ARN for analytics endpoints',
     });
 
+    new cdk.CfnOutput(this, 'ApiKeyValue', {
+      value: apiKey.keyId, // Note: This is the key ID, not the actual secret value
+      description: 'API Key value for CloudFront custom headers',
+    });
+
     new cdk.CfnOutput(this, 'UsagePlanId', {
       value: usagePlan.usagePlanId,
       description: 'Usage Plan ID for API key management',
     });
+
+    // Assign values to public properties for cross-stack references
+    this.apiGatewayUrl = api.url;
+    this.apiKeyId = apiKey.keyId;
+    this.apiKeyValue = apiKey.keyId; // Note: This is the key ID, not the actual secret value
   }
 }
