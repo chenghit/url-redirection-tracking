@@ -22,5 +22,5 @@
     "outDir": "./dist",
     "rootDir": "./src"
   },
-  "exclude": ["cdk.out", "dist", "node_modules", "**/*.test.ts"]
+  "exclude": ["cdk.out", "dist", "node_modules", "frontend", "**/*.test.ts"]
 }

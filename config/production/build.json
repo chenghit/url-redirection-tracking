@@ -1,0 +1,22 @@
+{
+  "environment": "production",
+  "minify": true,
+  "sourcemap": false,
+  "target": "es2020",
+  "outDir": "dist",
+  "assetsDir": "assets",
+  "rollupOptions": {
+    "output": {
+      "manualChunks": {
+        "vendor": ["react", "react-dom"],
+        "charts": ["chart.js", "react-chartjs-2"],
+        "router": ["react-router-dom"]
+      }
+    }
+  },
+  "define": {
+    "__DEV__": false,
+    "__STAGING__": false,
+    "__PROD__": true
+  }
+}

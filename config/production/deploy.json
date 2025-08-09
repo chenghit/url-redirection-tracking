@@ -1,0 +1,23 @@
+{
+  "environment": "production",
+  "aws": {
+    "region": "ap-northeast-1",
+    "profile": "primary",
+    "stackName": "FrontendStack"
+  },
+  "s3": {
+    "cacheControl": {
+      "html": "no-cache, no-store, must-revalidate",
+      "assets": "public, max-age=86400",
+      "static": "public, max-age=31536000"
+    }
+  },
+  "cloudfront": {
+    "invalidateOnDeploy": true,
+    "waitForInvalidation": true
+  },
+  "backup": {
+    "enabled": true,
+    "retentionDays": 90
+  }
+}

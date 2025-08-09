@@ -16,6 +16,8 @@ cdk.out/
 
 # Environment and configuration files
 .env
+.env.*
+!.env.example
 .env.local
 .env.development.local
 .env.test.local
@@ -44,6 +46,7 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 lerna-debug.log*
+dev-server.log
 
 # Runtime data
 pids/
@@ -128,3 +131,22 @@ Thumbs.db
 
 # Architecture diagram generation script
 architecture-diagram.py
+
+# Frontend specific ignores
+frontend/.env
+frontend/.env.*
+!frontend/.env.example
+frontend/dist/
+frontend/build/
+frontend/coverage/
+frontend/cypress/screenshots/
+frontend/cypress/videos/
+frontend/cypress/downloads/
+frontend/audit-results/
+frontend/testing/
+frontend/e2e-manual/
+frontend/node_modules/.vite/
+frontend/node_modules/.tmp/
+frontend/node_modules/.vite-temp/
+frontend/*.tsbuildinfo
+frontend/dev-server.log

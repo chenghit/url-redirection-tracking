@@ -1,0 +1,22 @@
+{
+  "environment": "staging",
+  "minify": true,
+  "sourcemap": true,
+  "target": "es2020",
+  "outDir": "dist-staging",
+  "assetsDir": "assets",
+  "rollupOptions": {
+    "output": {
+      "manualChunks": {
+        "vendor": ["react", "react-dom"],
+        "charts": ["chart.js", "react-chartjs-2"],
+        "router": ["react-router-dom"]
+      }
+    }
+  },
+  "define": {
+    "__DEV__": false,
+    "__STAGING__": true,
+    "__PROD__": false
+  }
+}

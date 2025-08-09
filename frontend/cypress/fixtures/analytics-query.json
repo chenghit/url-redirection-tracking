@@ -1,0 +1,54 @@
+{
+  "data": {
+    "events": [
+      {
+        "tracking_id": "track_001",
+        "timestamp": "2024-01-15T10:30:00Z",
+        "source_attribution": "google.com",
+        "destination_url": "https://example.com/page1",
+        "client_ip": "192.168.1.100",
+        "ttl": 1705320600,
+        "formatted_timestamp": "2024-01-15 10:30:00"
+      },
+      {
+        "tracking_id": "track_002",
+        "timestamp": "2024-01-15T11:15:00Z",
+        "source_attribution": "facebook.com",
+        "destination_url": "https://example.com/page2",
+        "client_ip": "192.168.1.101",
+        "ttl": 1705323300,
+        "formatted_timestamp": "2024-01-15 11:15:00"
+      },
+      {
+        "tracking_id": "track_003",
+        "timestamp": "2024-01-15T12:00:00Z",
+        "source_attribution": "twitter.com",
+        "destination_url": "https://example.com/page3",
+        "client_ip": "192.168.1.102",
+        "ttl": 1705326000,
+        "formatted_timestamp": "2024-01-15 12:00:00"
+      },
+      {
+        "tracking_id": "track_004",
+        "timestamp": "2024-01-15T13:45:00Z",
+        "source_attribution": "linkedin.com",
+        "destination_url": "https://example.com/page4",
+        "client_ip": "192.168.1.103",
+        "ttl": 1705332300,
+        "formatted_timestamp": "2024-01-15 13:45:00"
+      },
+      {
+        "tracking_id": "track_005",
+        "timestamp": "2024-01-15T14:30:00Z",
+        "source_attribution": "google.com",
+        "destination_url": "https://example.com/page5",
+        "client_ip": "192.168.1.104",
+        "ttl": 1705335000,
+        "formatted_timestamp": "2024-01-15 14:30:00"
+      }
+    ],
+    "total_count": 5,
+    "has_more": false
+  },
+  "timestamp": "2024-01-15T15:00:00Z"
+}
