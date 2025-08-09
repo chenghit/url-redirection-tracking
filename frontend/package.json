@@ -13,6 +13,7 @@
     "deploy": "../scripts/deploy-frontend.sh",
     "deploy:production": "../scripts/deploy-frontend.sh -e production",
     "deploy:staging": "../scripts/deploy-frontend.sh -e staging",
+    "deploy:development": "../scripts/deploy-frontend.sh -e development",
     "pipeline": "../scripts/pipeline-frontend.sh",
     "pipeline:production": "../scripts/pipeline-frontend.sh -e production",
     "pipeline:staging": "../scripts/pipeline-frontend.sh -e staging",
